@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+	font: 10px sans-serif;
+}
+
+.chord path {
+	fill-opacity: .67;
+	stroke: #000;
+	stroke-width: .5px;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+// Used code from Mike Bostock and http://www.delimited.io/
+// Data from www.theguardian.com
+// Raw data at https://docs.google.com/spreadsheets/d/19ShPc0rXWHTjf2mkNPSM32WzjswWbCJLXJJ3_38UI3s/edit#gid=0
+
+//Square matrix - Count of country and club country
+var players = [
+    [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,3,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,1,3,0,0,1,0,0,1,0,0,0,0,0,1,0,1,0,0,1,1,0,0,2,0,0,0,0,0,0,0],
+    [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,4,0,3,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0],
+    [0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,0,0,0,2,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [3,3,3,11,2,6,2,3,1,0,2,1,22,10,4,1,2,4,2,0,4,2,1,6,6,1,0,5,6,0,3,4],
+    [3,2,0,1,0,2,7,0,3,0,1,0,0,8,0,5,0,0,0,3,5,0,1,0,2,1,0,0,0,0,1,1],
+    [0,0,3,2,7,2,2,0,1,1,3,1,0,0,16,1,1,0,1,0,4,7,1,3,0,1,0,5,1,9,0,4],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,1,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,7,0,1,2,3,0,4,6,0,3,0,0,1,2,5,6,0,0,20,1,2,0,1,1,1,0,0,2,5,5,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,3,0,0,1,0],
+    [0,1,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,1,1],
+    [0,0,2,0,0,0,0,1,1,1,0,1,0,0,0,1,0,0,1,0,0,0,0,10,1,0,0,0,0,0,0,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0],
+    [3,3,0,1,0,0,0,0,2,0,0,0,0,1,0,0,0,0,1,0,0,0,2,0,0,8,0,0,0,0,2,0],
+    [0,0,0,2,0,1,0,0,0,1,2,1,0,0,0,2,0,0,0,0,0,0,0,0,1,1,23,0,0,0,0,0],
+    [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0],
+    [4,4,0,2,0,3,3,5,2,1,3,0,0,3,1,0,2,0,1,0,0,0,3,0,1,6,0,0,14,2,4,0],
+    [0,0,2,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,7,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    [0,0,1,0,0,0,0,0,0,3,0,1,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,9],
+    ];
+var chord = d3.layout.chord().padding(.05).sortSubgroups(d3.descending).matrix((players));
+var names = ["Algeria","Arg","Aus","BEL","BiH","Brazil","CMR","Chi","Col","CRC","CRO","ECU","England","France","Germany","Ghana","Greece","Hon","Iran","Italy","Ivory Ct","Japan","Mexico","Netherlands","NGA","Portugal","Russia","SK","Spain","Switz","Uruguay","USA"];
+
+var width = 1000,
+    height = 1000,
+    innerRadius = Math.min(width, height) * .41,
+    outerRadius = innerRadius * 1.1;
+
+var fill = d3.scale.ordinal().domain(d3.range(9)).range(["#006BA5", "#4C8D1C", "#F4C806", "#FC8200", "#971210"]);
+
+var svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height).append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+svg.append("g")
+    .selectAll("path")
+    .data(chord.groups)
+    .enter()
+    .append("path")
+    .style("fill", function(d) {
+    return fill(d.index);
+})
+    .style("stroke", function(d) {
+    return fill(d.index);
+})
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius)).on("mouseover", fade(.1))
+    .on("mouseout", fade(1))
+    .attr("id", function(d,i) { return "p"+i;});
+
+
+svg.append("g")
+  .selectAll("text")
+    .data(chord.groups)
+  .enter().append("text")
+      .attr("dy", 15)
+      .attr("x", 6)
+      .filter(function(d) { return d.value = "Spain" ; })
+    .append("textPath")
+        .attr("xlink:href", function(d,i) { return "#p" + i; })
+        .text(function(d,i) { return names[i]; });;
+
+
+var ticks = svg.append("g").selectAll("g").data(chord.groups).enter().append("g").selectAll("g").data(groupTicks).enter().append("g").attr("transform", function(d) {
+    return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")" + "translate(" + outerRadius + ",0)";
+});
+
+ticks.append("line").attr("x1", 1).attr("y1", 0).attr("x2", 5).attr("y2", 0).style("stroke", "#000");
+
+ticks.append("text").attr("x", 8).attr("dy", ".35em").attr("text-anchor", function(d) {
+    return d.angle > Math.PI ? "end" : null;
+}).attr("transform", function(d) {
+    return d.angle > Math.PI ? "rotate(180)translate(-16)" : null;
+}).text(function(d) {
+    return d.label;
+});
+
+svg.append("g")
+    .attr("class", "chord")
+    .selectAll("path")
+    .data(chord.chords)
+    .enter()
+    .append("path")
+    .style("fill", function(d) {
+    return fill(d.target.index);
+})
+    .attr("d", d3.svg.chord().radius(innerRadius)).style("opacity", 1);
+
+/** Returns an array of tick angles and labels, given a group. */
+
+function groupTicks(d) {
+    var k = (d.endAngle - d.startAngle) / d.value;
+    return d3.range(0, d.value, 1).map(function(v, i) {
+        return {
+            angle: v * k + d.startAngle,
+            label: i % 2 ? null : v + ""
+        };
+    });
+}
+
+/** Returns an event handler for fading a given chord group. */
+
+function fade(opacity) {
+    return function(g, i) {
+        svg.selectAll("g.chord path").filter(function(d) {
+            return d.source.index != i && d.target.index != i;
+        }).transition().style("opacity", opacity);
+    };
+}
+
+</script>
